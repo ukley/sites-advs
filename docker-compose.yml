@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8001:80" # NGINX will listen on port 80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro # Custom NGINX configuration
+    networks:
+      - wp_default
+    depends_on:
+      - wordpress
+
+  database:
+    image: quay.io/andrekley/db-card:v1
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_
+      - MYSQL_USER=wpdb
+      - MYSQL_PASSWORD=root1
+      - MYSQL_DATABASE=wpdb 
+    networks:
+      - wp_default
+    volumes:
+      - db_vol:/var/lib/mysql  
+
+  wordpress:
+    depends_on:
+      - database
+    image: quay.io/andrekley/wp:v2
+    ports:
+      - "8008:80"
+    environment:
+      - WORDPRESS_DB_HOST=database:3306
+      - WORDPRESS_DB_USER=wpdb
+      - WORDPRESS_DB_NAME=wpdb
+      - WORDPRESS_DB_PASSWORD=root1  
+    volumes:
+      - ./wordpress:/var/www/html
+    networks:
+      - wp_default  
+
+networks: 
+  wp_default:
+    driver: overlay
+
+volumes:
+  wp_vol:
